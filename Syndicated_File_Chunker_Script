@@ -76,7 +76,7 @@ def split_dlt_files(input_folder, output_folder, chunk_size):
 # Example usage:
 input_folder = r"Put the input folder's filepath here"
 output_folder = r"Put the output folder's filepath here"
-chunk_size = 40000
+chunk_size = 'Specify the record count here in numbers'
 split_dlt_files(input_folder, output_folder, chunk_size)
 
 print(f" ")
