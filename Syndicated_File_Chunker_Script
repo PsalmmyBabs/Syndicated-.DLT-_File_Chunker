@@ -1,0 +1,83 @@
+import os
+
+def split_dlt_files(input_folder, output_folder, chunk_size):
+    
+        try:
+            used_combinations = set()  # Keep track of used combinations
+            for file_name in os.listdir(input_folder):
+                if file_name.endswith(".DLT"):
+                    input_file = os.path.join(input_folder, file_name)
+                    with open(input_file, 'r', encoding='utf-8') as f:  # Specify file encoding
+                        lines = f.readlines()
+                    base_file_name, ext = os.path.splitext(file_name)
+                    rename_counter = 1
+                    num_records = len(lines) - 2  # Exclude first and last lines
+                    num_chunks = (num_records + chunk_size - 1) // chunk_size
+                    
+                    print(f"...")
+                    print(f"Processing file: {file_name}")
+                    print(f"Number of records: {(num_records // 2) - 2}")
+                    
+                    for i in range(num_chunks):
+                        start_index = 1 if i == 0 else (i * chunk_size) + 1
+                        end_index = min(start_index + chunk_size, num_records + 1)
+                        chunk_lines = lines[:1] + lines[start_index:end_index] + lines[-1:]
+                        
+                        # Divide the count of records in each chunk file by 2
+                        chunk_record_count = (end_index - start_index) // 2
+                        
+                        # Modify the last line to replace characters after the third pipe with the divided count
+                        last_line_parts = chunk_lines[-1].split('|')
+                        last_line_parts[3] = str(chunk_record_count)
+                        chunk_lines[-1] = '|'.join(last_line_parts)
+                        # Rename logic
+                        parts = base_file_name.split('-')
+                        last_part = parts[-1]
+                        
+                        # Generate intelligent numbers
+                        first_num = (rename_counter // 100) % 3
+                        if first_num == 2:
+                            second_num = (rename_counter // 10) % 4  # Ensures second_num is not greater than 3
+                        else:
+                            second_num = (rename_counter // 10) % 10
+                        third_num = rename_counter % 6  # Ensures third_num is not greater than 5
+                        
+                        # Ensure uniqueness of the combination
+                        combination = (first_num, second_num, third_num)
+                        while combination in used_combinations:
+                            rename_counter += 1
+                            first_num = (rename_counter // 100) % 3
+                            if first_num == 2:
+                                second_num = (rename_counter // 10) % 4
+                            else:
+                                second_num = (rename_counter // 10) % 10
+                            third_num = rename_counter % 6
+                            combination = (first_num, second_num, third_num)
+                        
+                        used_combinations.add(combination)
+   
+                        new_last_part = f"{first_num}{second_num}{third_num}" + last_part[3:]
+                        parts[-1] = new_last_part
+                        source_rename = '-'.join(parts)
+   
+                        output_file = os.path.join(output_folder, f"{source_rename}.DLT")
+   
+                        with open(output_file, 'w', encoding='utf-8') as f_out:  # Specify file encoding
+                            f_out.writelines(chunk_lines)
+   
+                        print(f"Chunk {i + 1} of {file_name} written to {output_file}")
+   
+                        rename_counter += 1
+   
+        except Exception as e:
+            print(f"An error occurred: {e}")
+   
+   
+# Example usage:
+input_folder = r"Put the input folder's filepath here"
+output_folder = r"Put the output folder's filepath here"
+chunk_size = 40000
+split_dlt_files(input_folder, output_folder, chunk_size)
+
+print(f" ")
+print(f"Processing Complete!")
